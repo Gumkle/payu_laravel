@@ -11,6 +11,6 @@
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/confession', 'PaymentController@displayPaymentWindow');
+Route::get('/confession/fine/{id?}', 'PaymentController@displayPaymentWindow');
+Route::get('/process-payment', 'PaymentController@processPaymentRequest');
