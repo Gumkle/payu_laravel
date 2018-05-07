@@ -11,6 +11,8 @@
 |
 */
 
-Route::get('/confession', 'PaymentController@displayPaymentWindow');
-Route::get('/confession/fine/{id?}', 'PaymentController@displayPaymentWindow');
-Route::get('/process-payment', 'PaymentController@processPaymentRequest');
+Route::get('/',                             'PaymentController@displayPaymentWindow');
+Route::get('/confession',                   'PaymentController@displayPaymentWindow');
+Route::get('/confession/fine/{id?}',        'PaymentController@displayPaymentWindow');
+
+Route::get('/process-payment',             'PaymentController@processPaymentRequest');

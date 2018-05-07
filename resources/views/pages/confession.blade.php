@@ -74,6 +74,7 @@
           <h3>Cena: {{$total_amount / 100}} zł / miesiąc</h3>
         </div>
         <div class="card-body text-center p-5">
+          
           <form class="" action="/process-payment" method="post">
             <button type="button" name="button" id="payment-button" class="btn w-100 btn-primary confession-payment-a font-weight-bold pt-3"><h5>Zapłać</h5></button>
           </form>
@@ -89,6 +90,7 @@
               recurring-payment="{{$recurring_payment}}"
               sig="{{$sig_value}}">
           </script>
+
         </div>
         <div class="card-footer">
           <p class="font-italic small text-muted text-center">Płatność możliwa jest tylko poprzez kartę</p>
