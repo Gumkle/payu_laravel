@@ -8,6 +8,7 @@
     </div>
   </div>
   <div class="row text-center">
+
     <h1 class="w-100">
       @if(!isset($total_amount))
         Spowiedź online
@@ -74,8 +75,9 @@
           <h3>Cena: {{$total_amount / 100}} zł / miesiąc</h3>
         </div>
         <div class="card-body text-center p-5">
-          
-          <form class="" action="/process-payment" method="post">
+
+          <form class="" action="http://payu.test/process-payment/{{$packet_id}}" method="post">
+            {{ csrf_field() }}
             <button type="button" name="button" id="payment-button" class="btn w-100 btn-primary confession-payment-a font-weight-bold pt-3"><h5>Zapłać</h5></button>
           </form>
           <script

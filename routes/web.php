@@ -15,4 +15,4 @@ Route::get('/',                             'PaymentController@displayPaymentWin
 Route::get('/confession',                   'PaymentController@displayPaymentWindow');
 Route::get('/confession/fine/{id?}',        'PaymentController@displayPaymentWindow');
 
-Route::get('/process-payment',             'PaymentController@processPaymentRequest');
+Route::post('/process-payment/{packet_id}',  'PaymentController@processPaymentRequest');

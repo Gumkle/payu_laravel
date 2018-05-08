@@ -7,9 +7,78 @@ use App\Http\Controllers\Controller;
 
 class PaymentController extends Controller
 {
-    public function processPaymentRequest(){
+    public function scheduleThisMothafucka($paymentAmount, $orderID, $value, $type, $packetName, $token_type, $access_token){
 
-        //Uwierzytelnianie OAuth
+      //Schedulowe pobieranie opłaty
+      $ch = curl_init();
+      curl_setopt($ch, CURLOPT_URL, "https://secure.snd.payu.com/api/v2_1/orders/");
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+      curl_setopt($ch, CURLOPT_HEADER, FALSE);
+
+      curl_setopt($ch, CURLOPT_POST, TRUE);
+      curl_setopt($ch, CURLOPT_POSTFIELDS, "{
+        \"notifyUrl\": \"http://payu.test/notify\",
+        \"customerIp\": \"127.0.0.1\",
+        \"merchantPosId\": \"332235\",
+        \"description\": \"Testowy sklep\",
+        \"currencyCode\": \"PLN\",
+        \"totalAmount\": \"$paymentAmount\",
+        \"extOrderId\": \"$orderID\",
+        \"recurring\": \"STANDARD\",
+        \"products\": [
+          {
+            \"name\": \"$packetName\",
+            \"unitPrice\": \"$paymentAmount\",
+            \"quantity\": \"1\"
+          }
+        ],
+        \"buyer\": {
+          \"email\": \"john.doe@example.com\",
+          \"firstName\": \"Jan\",
+          \"lastName\": \"Kowalski\",
+          \"language\": \"pl\"
+        },
+        \"payMethods\": {
+          \"payMethod\":{
+            \"value\": \"$value\",
+            \"type\": \"$type\"
+          }
+        }
+      }");
+      curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        "Content-Type: application/json",
+        "Authorization: $token_type $access_token"
+      ));
+
+      $response = curl_exec($ch);
+      curl_close($ch);
+      $response = json_decode($response, true);
+      echo "<pre>";
+      var_dump($response);
+      echo "</pre>";
+    }
+
+    public function processPaymentRequest($packet_id){
+      //Sprawdzanie wybranego pakietu i dostosowywanie zmiennych
+        switch($packet_id){
+          case 1:
+            $paymentAmount = 500;
+            $packetName = "Basic fine";
+            break;
+          case 2:
+            $paymentAmount = 1500;
+            $packetName = "Extended fine";
+            break;
+          case 3:
+            $paymentAmount = 5000;
+            $packetName = "Enlightement fine";
+            break;
+          default:
+            return view('pages.confession');
+            break;
+        }
+
+        //Uwierzytelnianie OAuth  http://developers.payu.com/pl/restapi.html#references_api_signature
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, "https://secure.snd.payu.com/pl/standard/user/oauth/authorize");
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
@@ -26,10 +95,11 @@ class PaymentController extends Controller
         curl_close($ch);
         $OAuthToken = json_decode($OAuthToken, true);
         extract($OAuthToken);
+        extract($_POST);
 
-        //Tworzenie zamówienia
+        //Tworzenie i realizacja zamówienia http://developers.payu.com/pl/recurring.html#payu_express_retrieve
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, "https://secure.snd.payu.com/pl/standard/user/oauth/authorize");
+        curl_setopt($ch, CURLOPT_URL, "https://secure.snd.payu.com/api/v2_1/orders/");
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
         curl_setopt($ch, CURLOPT_HEADER, FALSE);
 
@@ -40,14 +110,26 @@ class PaymentController extends Controller
           \"merchantPosId\": \"332235\",
           \"description\": \"Testowy sklep\",
           \"currencyCode\": \"PLN\",
-          \"totalAmount\": \"5000\",
+          \"totalAmount\": \"$paymentAmount\",
           \"products\": [
             {
-              \"name\": \"Wireless mouse\",
-              \"unitPrice\": \"15000\",
+              \"name\": \"$packetName\",
+              \"unitPrice\": \"$paymentAmount\",
               \"quantity\": \"1\"
             }
-          ]
+          ],
+          \"buyer\": {
+            \"email\": \"john.doe@example.com\",
+            \"firstName\": \"Jan\",
+            \"lastName\": \"Kowalski\",
+            \"language\": \"pl\"
+          },
+          \"payMethods\": {
+            \"payMethod\":{
+              \"value\": \"$value\",
+              \"type\": \"$type\"
+            }
+          }
         }");
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
           "Content-Type: application/json",
@@ -56,13 +138,25 @@ class PaymentController extends Controller
 
         $response = curl_exec($ch);
         curl_close($ch);
+        $response = json_decode($response, true);
 
+        echo "<pre>";
         var_dump($response);
-        var_dump();
+        echo "</pre>";
+        echo "\n";
+        echo $response['orderId']."\n";
+        echo $response['payMethods']['payMethod']['value']."\n";
+        echo $response['payMethods']['payMethod']['type']."\n";
+        echo "\n\n";
+        sleep(15);
+        $this->scheduleThisMothafucka($paymentAmount, $response['orderId'], $response['payMethods']['payMethod']['value'], $response['payMethods']['payMethod']['type'], $packetName, $token_type, $access_token);
+
+
     }
 
-    public function displayPaymentWindow($id = null){
 
+
+    public function displayPaymentWindow($id = null){
         if(!isset($id))
           return view('pages.confession');
 
@@ -97,6 +191,7 @@ class PaymentController extends Controller
         $secondaryKey = '24179aee3323e3f8464e0678a913e341';
         $sigValue = hash('sha256', implode($widgetScriptData).$secondaryKey);
         $widgetScriptData['sig_value'] = $sigValue;
+        $widgetScriptData['packet_id'] = $id;
 
         return view('pages.confession', $widgetScriptData);
     }
